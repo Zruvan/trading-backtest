@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg14
+    environment:
+      POSTGRES_DB: trading_backtest
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_timescale.sql:/docker-entrypoint-initdb.d/init_timescale.sql
+    command: postgres -c shared_preload_libraries=timescaledb
+
+volumes:
+  postgres_data:
