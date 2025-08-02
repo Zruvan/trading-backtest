@@ -81,10 +81,27 @@ config/settings.py
 data/cache/
 .env.local
 
-# Database
+# Project specific
 *.db
 *.sqlite3
+trading_backtest.db
+reports/*.pdf
+.DS_Store
 
-# Temporary files
+# Local environment files
+.env.local
+.env.docker.local
+
+# Cache and temporary files
+data/cache/
 *.tmp
 *.temp
+
+# Docker volumes
+postgres_data/
+redis_data/
+app_logs/
+jupyter_data/
+
+# Jupyter notebooks checkpoints
+notebooks/.ipynb_checkpoints/

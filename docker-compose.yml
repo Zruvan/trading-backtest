@@ -1,0 +1,119 @@
+services:
+  # PostgreSQL with TimescaleDB
+  database:
+    image: timescale/timescaledb:latest-pg15
+    container_name: trading_backtest_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: trading_backtest
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_timescale.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d trading_backtest"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trading_network
+
+  # Trading Backtest Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trading_backtest_app
+    restart: unless-stopped
+    environment:
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_NAME=trading_backtest
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - USE_SQLITE=false
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./reports:/app/reports
+      - ./data:/app/data
+      - app_logs:/app/logs
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - trading_network
+    command: >
+      sh -c "
+        echo 'Waiting for database to be ready...' &&
+        python scripts/setup_db.py &&
+        echo 'Database setup complete. Starting application...' &&
+        python verify_setup.py
+      "
+
+  # Optional: Jupyter Notebook for analysis
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trading_backtest_jupyter
+    restart: unless-stopped
+    environment:
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_NAME=trading_backtest
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - USE_SQLITE=false
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./reports:/app/reports
+      - ./data:/app/data
+      - ./notebooks:/app/notebooks
+      - jupyter_data:/home/appuser/.jupyter
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - trading_network
+    command: >
+      sh -c "
+        pip install jupyter &&
+        mkdir -p /app/notebooks &&
+        jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
+      "
+    profiles:
+      - jupyter
+
+  # Optional: Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: trading_backtest_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - trading_network
+    profiles:
+      - cache
+
+volumes:
+  postgres_data:
+    driver: local
+  app_logs:
+    driver: local
+  jupyter_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  trading_network:
+    driver: bridge

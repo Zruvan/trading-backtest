@@ -1,0 +1,93 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+build
+develop-eggs
+dist
+downloads
+eggs
+.eggs
+lib
+lib64
+parts
+sdist
+var
+wheels
+*.egg-info
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv
+venv
+env
+ENV
+env.bak
+venv.bak
+
+# Environment files
+.env
+.env.local
+.env.docker.local
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Cache and temporary files
+*.tmp
+*.temp
+.cache
+.pytest_cache
+
+# Database files
+*.db
+*.sqlite3
+trading_backtest.db
+
+# Reports and data
+reports/
+data/cache/
+
+# Documentation build
+docs/_build/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+
+# Testing
+.tox/
+.nox/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Project specific ignores
+PROJECT_ARCHITECTURE.md
+DOCKER_GUIDE.md
+README.md
+LICENSE

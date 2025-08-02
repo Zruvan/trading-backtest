@@ -29,3 +29,10 @@ alembic>=1.7.0
 
 # Logging
 structlog>=21.1.0
+
+# Optional: Redis for caching
+redis>=4.0.0
+
+# Optional: Jupyter for analysis
+jupyter>=1.0.0
+ipykernel>=6.0.0
