@@ -1,7 +1,7 @@
 """Base strategy class for all trading strategies."""
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 import pandas as pd
 from datetime import datetime
 
@@ -135,7 +135,7 @@ class BaseStrategy(ABC):
         self._universe = universe
         logger.debug(f"Set universe with {len(universe)} stocks")
     
-    def get_price_data(self, symbol: str, date: pd.Timestamp = None) -> pd.DataFrame:
+    def get_price_data(self, symbol: str, date: Optional[pd.Timestamp] = None) -> pd.DataFrame:
         """
         Get price data for a symbol up to a specific date.
         
@@ -157,7 +157,7 @@ class BaseStrategy(ABC):
         
         return data
     
-    def get_returns(self, symbol: str, periods: int = 1, date: pd.Timestamp = None) -> float:
+    def get_returns(self, symbol: str, periods: int = 1, date: Optional[pd.Timestamp] = None) -> float:
         """
         Calculate returns for a symbol.
         
@@ -181,13 +181,13 @@ class BaseStrategy(ABC):
         except (IndexError, ZeroDivisionError):
             return 0.0
     
-    def get_volatility(self, symbol: str, periods: int = 252, date: pd.Timestamp = None) -> float:
+    def get_volatility(self, symbol: str, window: int = 30, date: Optional[pd.Timestamp] = None) -> float:
         """
         Calculate volatility for a symbol.
         
         Args:
             symbol: Stock symbol
-            periods: Number of periods for volatility calculation
+            window: Number of periods for volatility calculation
             date: End date for calculation
         
         Returns:
@@ -195,7 +195,7 @@ class BaseStrategy(ABC):
         """
         data = self.get_price_data(symbol, date)
         
-        if len(data) < periods:
+        if len(data) < window:
             return 0.0
         
         try:

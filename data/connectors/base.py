@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Any
 import pandas as pd
 from datetime import datetime, timedelta
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class BaseConnector(ABC):
             **kwargs: Additional connector-specific parameters
         """
         self.api_key = api_key
-        self.session = None
+        self.session: requests.Session
         self._setup_session(**kwargs)
     
     def _setup_session(self, **kwargs):
@@ -34,9 +35,8 @@ class BaseConnector(ABC):
             'Accept': 'application/json',
         })
         
-        # Configure timeouts and retries
-        timeout = kwargs.get('timeout', 30)
-        self.session.timeout = timeout
+        # Store timeout for use in requests (sessions don't have a timeout attribute)
+        self.timeout = kwargs.get('timeout', 30)
     
     @abstractmethod
     def get_stock_info(self, symbol: str) -> Dict[str, Any]:
@@ -146,6 +146,5 @@ class BaseConnector(ABC):
     
     def close(self):
         """Close the connector and clean up resources."""
-        if self.session:
+        if hasattr(self, 'session') and self.session:
             self.session.close()
-            self.session = None

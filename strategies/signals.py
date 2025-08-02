@@ -138,8 +138,8 @@ class SignalGenerator:
             RSI series
         """
         delta = prices.diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+        gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()  # type: ignore
+        loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()  # type: ignore
         
         rs = gain / loss
         rsi = 100 - (100 / (1 + rs))

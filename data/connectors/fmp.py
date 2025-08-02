@@ -58,7 +58,7 @@ class FMPConnector(BaseConnector):
         self.last_request_time = time.time()
         self.request_count += 1
     
-    def _make_request(self, endpoint: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    def _make_request(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Make API request with rate limiting and error handling.
         
@@ -78,7 +78,7 @@ class FMPConnector(BaseConnector):
         url = f"{self.base_url}/{endpoint}"
         
         try:
-            response = self.session.get(url, params=params, timeout=30)
+            response = self.session.get(url, params=params, timeout=getattr(self, 'timeout', 30))
             response.raise_for_status()
             
             data = response.json()
@@ -106,7 +106,7 @@ class FMPConnector(BaseConnector):
         try:
             data = self._make_request(f"profile/{symbol}")
             if isinstance(data, list) and len(data) > 0:
-                return data[0]
+                return data[0]  # type: ignore
             return data if isinstance(data, dict) else {}
         except Exception as e:
             logger.error(f"Failed to get stock info for {symbol}: {e}")
@@ -232,7 +232,8 @@ class FMPConnector(BaseConnector):
                 # Filter for common stocks and major exchanges
                 filtered = []
                 for stock in data:
-                    if (stock.get('type') == 'stock' and 
+                    if (isinstance(stock, dict) and 
+                        stock.get('type') == 'stock' and 
                         stock.get('exchangeShortName') in ['NASDAQ', 'NYSE', 'AMEX']):
                         filtered.append(stock)
                 
@@ -255,7 +256,7 @@ class FMPConnector(BaseConnector):
             data = self._make_request("sp500_constituent")
             
             if isinstance(data, list):
-                return [stock['symbol'] for stock in data if 'symbol' in stock]
+                return [stock['symbol'] for stock in data if isinstance(stock, dict) and 'symbol' in stock]  # type: ignore
             
             return []
         

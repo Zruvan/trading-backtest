@@ -54,8 +54,14 @@ class PortfolioAllocator:
         for symbol in symbols:
             if symbol in universe.index:
                 market_cap = universe.loc[symbol, 'market_cap']
-                if pd.notna(market_cap) and market_cap > 0:
-                    market_caps[symbol] = market_cap
+                try:
+                    if pd.notna(market_cap):
+                        # Cast to bypass type checker limitations with pandas scalars
+                        market_cap_val = float(market_cap)  # type: ignore
+                        if market_cap_val > 0:
+                            market_caps[symbol] = market_cap_val
+                except (ValueError, TypeError):
+                    continue
         
         if not market_caps:
             logger.warning("No valid market cap data found, using equal weights")
@@ -372,8 +378,10 @@ class PortfolioAllocator:
             return {}
         
         # Remove zero or negative weights
-        valid_allocation = {symbol: weight for symbol, weight in allocation.items() 
-                          if weight > 0 and pd.notna(weight)}
+        valid_allocation: Dict[str, float] = {
+            symbol: float(weight) for symbol, weight in allocation.items() 
+            if weight > 0 and pd.notna(weight)
+        }
         
         if not valid_allocation:
             return {}
@@ -381,7 +389,10 @@ class PortfolioAllocator:
         # Normalize to sum to 1
         total_weight = sum(valid_allocation.values())
         if total_weight > 0:
-            valid_allocation = {symbol: weight / total_weight 
-                              for symbol, weight in valid_allocation.items()}
+            normalized_allocation: Dict[str, float] = {
+                symbol: float(weight) / float(total_weight) 
+                for symbol, weight in valid_allocation.items()
+            }
+            valid_allocation = normalized_allocation
         
         return valid_allocation

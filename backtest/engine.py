@@ -34,7 +34,7 @@ class BacktestEngine:
         self,
         start_date: datetime,
         end_date: datetime,
-        universe: List[str] = None,
+        universe: Optional[List[str]] = None,
         benchmark: str = 'SPY'
     ) -> Dict[str, Any]:
         """
@@ -131,7 +131,7 @@ class BacktestEngine:
         # Run strategy components
         try:
             # Screen stocks
-            selected_stocks = self.strategy.screen_stocks(universe_data, current_date)
+            selected_stocks = self.strategy.screen_stocks(universe_data, pd.Timestamp(current_date))
             
             if not selected_stocks:
                 logger.warning(f"No stocks selected on {current_date}")
@@ -139,11 +139,11 @@ class BacktestEngine:
             
             # Generate signals
             relevant_data = pd.DataFrame(index=selected_stocks)
-            signals = self.strategy.generate_signals(relevant_data, current_date)
+            signals = self.strategy.generate_signals(relevant_data, pd.Timestamp(current_date))
             
             # Allocate portfolio
             target_allocation = self.strategy.allocate_portfolio(
-                selected_stocks, signals, self.portfolio, current_date
+                selected_stocks, signals, self.portfolio, pd.Timestamp(current_date)
             )
             
             # Execute trades (simplified)
