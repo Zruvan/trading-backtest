@@ -51,56 +51,61 @@ class MarketCapStrategy(BaseStrategy):
     
     def allocate_portfolio(self, selected_stocks, signals, current_portfolio, date):
         """Allocate by market cap weight."""
-        # Get market caps for selected stocks
-        market_caps = pd.Series()
-        for stock in selected_stocks:
-            # This would come from fundamental data in real implementation
-            market_caps[stock] = 1.0  # Placeholder
+        # Create a simple universe DataFrame with market caps for testing
+        import pandas as pd
+        
+        # Mock market cap data for selected stocks
+        mock_market_caps = {
+            stock: 1000000000 * (len(selected_stocks) - i)  # Decreasing market caps
+            for i, stock in enumerate(selected_stocks)
+        }
+        
+        # Create a DataFrame with market cap data
+        universe_df = pd.DataFrame({
+            'market_cap': mock_market_caps
+        })
         
         return PortfolioAllocator.market_cap_weight(
             selected_stocks, 
-            market_caps,
-            max_weight=0.20  # Max 20% per position
+            universe_df
         )
-
-
 def main():
     """Run market cap strategy backtest."""
+    from datetime import datetime
+    import os
+    
     # Create strategy
     strategy = MarketCapStrategy()
     
     # Create backtest engine
-    engine = BacktestEngine(
-        strategy=strategy,
-        start_date="2022-01-01",
-        end_date="2023-12-31",
-        universe=None,  # Will use available stocks
-        benchmark="SPY"
-    )
-    
-    # Load data
-    logger.info("Loading market data...")
-    engine.load_data()
+    engine = BacktestEngine(strategy)
     
     # Run backtest
     logger.info("Running backtest...")
-    results = engine.run()
+    start_date = datetime(2022, 1, 1)
+    end_date = datetime(2023, 12, 31)
     
-    # Generate report
-    logger.info("Generating report...")
-    report_path = f"reports/{strategy.name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-    os.makedirs("reports", exist_ok=True)
-    
-    report_generator = PDFReportGenerator(results, report_path)
-    report_generator.generate_report()
+    results = engine.run(
+        start_date=start_date,
+        end_date=end_date,
+        universe=['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'JPM', 'JNJ', 'PG'],
+        benchmark="SPY"
+    )
     
     # Print summary
     print("\n=== Backtest Results Summary ===")
+    print(f"Strategy: {results['strategy_name']}")
+    print(f"Period: {results['start_date'].strftime('%Y-%m-%d')} to {results['end_date'].strftime('%Y-%m-%d')}")
+    print(f"Initial Capital: ${results['initial_capital']:,.2f}")
+    print(f"Final Value: ${results['final_value']:,.2f}")
     print(f"Total Return: {results['total_return']*100:.2f}%")
     print(f"Annualized Return: {results['annualized_return']*100:.2f}%")
     print(f"Sharpe Ratio: {results['sharpe_ratio']:.3f}")
     print(f"Max Drawdown: {results['max_drawdown']*100:.2f}%")
-    print(f"Total Trades: {results['total_trades']}")
+    print(f"Volatility: {results['volatility']*100:.2f}%")
+    
+    logger.info("Backtest completed successfully!")
+    return results
     print(f"\nReport saved to: {report_path}")
 
 
